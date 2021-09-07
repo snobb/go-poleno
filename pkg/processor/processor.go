@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"strings"
 )
 
 // interesting fields
@@ -57,8 +58,10 @@ func (s *StdoutProcessor) Process(in []byte) error {
 func (s *StdoutProcessor) compile(data map[string]interface{}) string {
 	var out bytes.Buffer
 	var colour string
+	var level string
 
-	if level, ok := data[s.fields[Level]]; ok {
+	level, ok := data[s.fields[Level]].(string)
+	if ok {
 		switch level {
 		case "info":
 			colour = cWhite
@@ -84,6 +87,10 @@ func (s *StdoutProcessor) compile(data map[string]interface{}) string {
 			out.WriteString(fmt.Sprintf("%s ", value))
 			delete(data, s.fields[field])
 		}
+	}
+
+	if level != "" {
+		out.WriteString(fmt.Sprintf("%s ", strings.ToUpper(level)))
 	}
 
 	if msg, ok := data[s.fields[Msg]]; ok {

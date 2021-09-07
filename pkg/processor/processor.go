@@ -7,37 +7,50 @@ import (
 	"strings"
 )
 
-// interesting fields
 const (
-	Msg = iota
-	Time
-	Level
-	Name
-	Hostname
+	fTime  = "time"
+	fMsg   = "msg"
+	fName  = "name"
+	fLevel = "level"
+	fHost  = "hostname"
 )
 
-const (
-	cGrey   = "\x1b[2m"
-	cRed    = "\x1b[31m"
-	cWhite  = "\x1b[1m"
-	cYellow = "\x1b[33m"
-	cReset  = "\x1b[m"
-)
+var colourMap = map[string]string{
+	"reset": "\x1b[0m",
+	"white": "\x1b[1m",
+	"grey":  "\x1b[2m",
+
+	"black":   "\x1b[30m",
+	"red":     "\x1b[31m",
+	"green":   "\x1b[32m",
+	"yellow":  "\x1b[33m",
+	"blue":    "\x1b[34m",
+	"magenta": "\x1b[35m",
+	"cyan":    "\x1b[36m",
+}
+
+var levelColours = map[string]string{
+	"error": "red",
+	"info":  "white",
+	"warn":  "yellow",
+	"debug": "grey",
+	"trace": "grey",
+}
 
 // StdoutProcessor process inbound data and outputs processed result to stdout
 type StdoutProcessor struct {
-	fields map[int]string
+	fields map[string]string
 }
 
 // New creates a new processor function
 func New() *StdoutProcessor {
 	return &StdoutProcessor{
-		fields: map[int]string{
-			Time:     "time",
-			Msg:      "msg",
-			Name:     "name",
-			Level:    "level",
-			Hostname: "hostname",
+		fields: map[string]string{
+			fTime:  "time",
+			fMsg:   "msg",
+			fName:  "name",
+			fLevel: "level",
+			fHost:  "hostname",
 		},
 	}
 }
@@ -55,34 +68,30 @@ func (s *StdoutProcessor) Process(in []byte) error {
 	return nil
 }
 
-func (s *StdoutProcessor) compile(data map[string]interface{}) string {
-	var out bytes.Buffer
-	var colour string
-	var level string
-
-	level, ok := data[s.fields[Level]].(string)
-	if ok {
-		switch level {
-		case "info":
-			colour = cWhite
-
-		case "error":
-			colour = cRed
-
-		case "warn":
-			colour = cYellow
-
-		case "debug":
-			colour = cGrey
-
-		case "trace":
-			colour = cGrey
-		}
-		delete(data, s.fields[Level])
-		out.WriteString(colour)
+func levelToColour(level string) string {
+	colour, ok := levelColours[level]
+	if !ok {
+		colour = "reset"
 	}
 
-	for _, field := range []int{Time, Hostname, Name} {
+	if cHash, ok := colourMap[colour]; ok {
+		return cHash
+	}
+
+	return colourMap["reset"]
+}
+
+func (s *StdoutProcessor) compile(data map[string]interface{}) string {
+	var out bytes.Buffer
+	var level string
+
+	level, ok := data[s.fields[fLevel]].(string)
+	if ok {
+		out.WriteString(levelToColour(level))
+		delete(data, s.fields[fLevel])
+	}
+
+	for _, field := range []string{fTime, fHost, fName} {
 		if value, ok := data[s.fields[field]]; ok {
 			out.WriteString(fmt.Sprintf("%s ", value))
 			delete(data, s.fields[field])
@@ -93,15 +102,15 @@ func (s *StdoutProcessor) compile(data map[string]interface{}) string {
 		out.WriteString(fmt.Sprintf("%s ", strings.ToUpper(level)))
 	}
 
-	if msg, ok := data[s.fields[Msg]]; ok {
+	if msg, ok := data[s.fields[fMsg]]; ok {
 		out.WriteString(fmt.Sprintf(":: %s ", msg))
-		delete(data, s.fields[Msg])
+		delete(data, s.fields[fMsg])
 	}
 
 	rest, _ := json.MarshalIndent(data, "", "  ")
 
 	out.Write(rest)
-	out.WriteString(cReset)
+	out.WriteString(colourMap["reset"])
 
 	return out.String()
 }

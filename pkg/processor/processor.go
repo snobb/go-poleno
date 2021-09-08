@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 )
 
@@ -37,14 +38,16 @@ var levelColours = map[string]string{
 	"trace": "grey",
 }
 
-// StdoutProcessor process inbound data and outputs processed result to stdout
-type StdoutProcessor struct {
+// Processor process inbound data and outputs processed result to the provided writer
+type Processor struct {
+	out    io.Writer
 	fields map[string]string
 }
 
 // New creates a new processor function
-func New() *StdoutProcessor {
-	return &StdoutProcessor{
+func New(out io.Writer) *Processor {
+	return &Processor{
+		out: out,
 		fields: map[string]string{
 			fTime:  "time",
 			fMsg:   "msg",
@@ -55,17 +58,19 @@ func New() *StdoutProcessor {
 	}
 }
 
-// Process processes a line of input data.
-func (s *StdoutProcessor) Process(in []byte) error {
-	var out map[string]interface{}
+// Process processes a line of input data and return n of bytes written
+// to the out writer or error.
+func (s *Processor) Process(in []byte) (int, error) {
+	var data map[string]interface{}
 
-	if err := json.Unmarshal(in, &out); err != nil {
-		return err
+	if err := json.Unmarshal(in, &data); err != nil {
+		return 0, err
 	}
 
-	fmt.Println(s.compile(out))
+	bytes := s.compile(data)
+	s.out.Write(bytes)
 
-	return nil
+	return len(bytes), nil
 }
 
 func levelToColour(level string) string {
@@ -81,7 +86,7 @@ func levelToColour(level string) string {
 	return colourMap["reset"]
 }
 
-func (s *StdoutProcessor) compile(data map[string]interface{}) string {
+func (s *Processor) compile(data map[string]interface{}) []byte {
 	var out bytes.Buffer
 	var level string
 
@@ -111,6 +116,7 @@ func (s *StdoutProcessor) compile(data map[string]interface{}) string {
 
 	out.Write(rest)
 	out.WriteString(colourMap["reset"])
+	out.WriteString("\n")
 
-	return out.String()
+	return out.Bytes()
 }

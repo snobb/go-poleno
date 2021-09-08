@@ -9,7 +9,7 @@ import (
 
 func main() {
 	in := bufio.NewScanner(os.Stdin)
-	out := processor.New()
+	out := processor.New(os.Stdout)
 
 	for in.Scan() {
 		bytes := in.Bytes()
@@ -17,7 +17,7 @@ func main() {
 			break
 		}
 
-		if err := out.Process(bytes); err != nil {
+		if _, err := out.Process(bytes); err != nil {
 			panic(err)
 		}
 	}

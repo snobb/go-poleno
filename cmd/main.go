@@ -3,6 +3,8 @@ package main
 import (
 	"bufio"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/snobb/go-poleno/pkg/processor"
 )
@@ -10,15 +12,26 @@ import (
 func main() {
 	in := bufio.NewScanner(os.Stdin)
 	out := processor.New(os.Stdout)
+	sigs := make(chan os.Signal, 1)
+
+	signal.Notify(sigs,
+		syscall.SIGINT, syscall.SIGTERM,
+		syscall.SIGQUIT, os.Interrupt)
 
 	for in.Scan() {
-		bytes := in.Bytes()
-		if len(bytes) == 0 {
+		select {
+		case <-sigs:
 			break
-		}
 
-		if _, err := out.Process(bytes); err != nil {
-			panic(err)
+		default:
+			bytes := in.Bytes()
+			if len(bytes) == 0 {
+				break
+			}
+
+			if _, err := out.Process(bytes); err != nil {
+				panic(err)
+			}
 		}
 	}
 }

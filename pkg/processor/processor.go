@@ -68,7 +68,7 @@ func (s *Processor) Process(in []byte) (int, error) {
 	}
 
 	bytes := s.compile(data)
-	s.out.Write(bytes)
+	_, _ = s.out.Write(bytes)
 
 	return len(bytes), nil
 }

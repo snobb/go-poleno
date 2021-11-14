@@ -2,26 +2,13 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
+	"fmt"
 	"os"
 	"os/signal"
 	"syscall"
-	"time"
 
 	"github.com/snobb/go-poleno/pkg/processor"
 )
-
-func wrapError(err error, line []byte) []byte {
-	msg, _ := json.Marshal(map[string]interface{}{
-		"time":  time.Now().Format(time.RFC3339),
-		"level": "error",
-		"name":  "poleno:internal",
-		"line":  string(line),
-		"error": err.Error(),
-	})
-
-	return msg
-}
 
 func main() {
 	in := bufio.NewScanner(os.Stdin)
@@ -44,9 +31,8 @@ func main() {
 			}
 
 			if _, err := out.Process(bytes); err != nil {
-				if _, err = out.Process(wrapError(err, bytes)); err != nil {
-					panic(err)
-				}
+				// not json - just ignore the error and print the original line
+				fmt.Println(string(bytes))
 			}
 		}
 	}

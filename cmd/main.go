@@ -30,7 +30,7 @@ func main() {
 				break
 			}
 
-			if _, err := out.Process(bytes); err != nil {
+			if _, err := out.Write(bytes); err != nil {
 				// not json - just ignore the error and print the original line
 				fmt.Println(string(bytes))
 			}

@@ -60,15 +60,15 @@ func New(out io.Writer) *Processor {
 
 // Process processes a line of input data and return n of bytes written
 // to the out writer or error.
-func (s *Processor) Process(in []byte) (int, error) {
+func (p *Processor) Write(in []byte) (n int, err error) {
 	var data map[string]interface{}
 
 	if err := json.Unmarshal(in, &data); err != nil {
 		return 0, err
 	}
 
-	bytes := s.compile(data)
-	_, _ = s.out.Write(bytes)
+	bytes := p.compile(data)
+	_, _ = p.out.Write(bytes)
 
 	return len(bytes), nil
 }
@@ -86,20 +86,20 @@ func levelToColour(level string) string {
 	return colourMap["reset"]
 }
 
-func (s *Processor) compile(data map[string]interface{}) []byte {
+func (p *Processor) compile(data map[string]interface{}) []byte {
 	var out bytes.Buffer
 	var level string
 
-	level, ok := data[s.fields[fLevel]].(string)
+	level, ok := data[p.fields[fLevel]].(string)
 	if ok {
 		out.WriteString(levelToColour(level))
-		delete(data, s.fields[fLevel])
+		delete(data, p.fields[fLevel])
 	}
 
 	for _, field := range []string{fTime, fHost, fName} {
-		if value, ok := data[s.fields[field]]; ok {
+		if value, ok := data[p.fields[field]]; ok {
 			out.WriteString(fmt.Sprintf("%s ", value))
-			delete(data, s.fields[field])
+			delete(data, p.fields[field])
 		}
 	}
 
@@ -107,9 +107,9 @@ func (s *Processor) compile(data map[string]interface{}) []byte {
 		out.WriteString(fmt.Sprintf("%s ", strings.ToUpper(level)))
 	}
 
-	if msg, ok := data[s.fields[fMsg]]; ok {
+	if msg, ok := data[p.fields[fMsg]]; ok {
 		out.WriteString(fmt.Sprintf(":: %s ", msg))
-		delete(data, s.fields[fMsg])
+		delete(data, p.fields[fMsg])
 	}
 
 	rest, _ := json.MarshalIndent(data, "", "  ")

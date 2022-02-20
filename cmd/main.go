@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"regexp"
+	"strings"
 	"syscall"
 
 	"github.com/snobb/go-poleno/pkg/processor"
@@ -14,9 +16,12 @@ import (
 var version string
 
 func main() {
-	var name string
+	var fields, level, msg string
 	var ver bool
-	flag.StringVar(&name, "n", "name", "field to show in the header")
+
+	flag.StringVar(&fields, "f", "time,hostname,name", "comma separated list of fields to show in the header")
+	flag.StringVar(&level, "l", "level", "name of the log level field")
+	flag.StringVar(&msg, "m", "msg", "name of the message field")
 	flag.BoolVar(&ver, "v", false, "show version")
 	flag.Parse()
 
@@ -26,7 +31,13 @@ func main() {
 	}
 
 	in := bufio.NewScanner(os.Stdin)
-	out := processor.New(os.Stdout, name)
+
+	out := &processor.Processor{
+		Out:          os.Stdout,
+		HeaderFields: split(fields),
+		LevelField:   level,
+		MsgField:     msg,
+	}
 	sigs := make(chan os.Signal, 1)
 
 	signal.Notify(sigs,
@@ -50,4 +61,9 @@ func main() {
 			}
 		}
 	}
+}
+
+func split(line string) []string {
+	re := regexp.MustCompile(`\s*,\s*`)
+	return re.Split(strings.TrimSpace(line), -1)
 }

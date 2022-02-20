@@ -24,7 +24,7 @@ cover:
 test:
 	go test -timeout $(TIMEOUT)s -cover -coverprofile=$(COVEROUT) ./pkg/...
 
-build:
+build: clean
 	go build ${CFLAGS} $(MAIN)
 
 build-linux: clean

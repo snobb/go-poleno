@@ -8,13 +8,6 @@ import (
 	"strings"
 )
 
-const (
-	fTime  = "time"
-	fMsg   = "msg"
-	fLevel = "level"
-	fHost  = "hostname"
-)
-
 var colourMap = map[string]string{
 	"reset": "\x1b[0m",
 	"white": "\x1b[1m",
@@ -39,24 +32,10 @@ var levelColours = map[string]string{
 
 // Processor process inbound data and outputs processed result to the provided writer
 type Processor struct {
-	out       io.Writer
-	fields    map[string]string
-	nameField string
-}
-
-// New creates a new processor function
-func New(out io.Writer, nameField string) *Processor {
-	return &Processor{
-		out: out,
-		fields: map[string]string{
-			fTime:     "time",
-			fMsg:      "msg",
-			fLevel:    "level",
-			fHost:     "hostname",
-			nameField: nameField,
-		},
-		nameField: nameField,
-	}
+	Out          io.Writer
+	HeaderFields []string
+	LevelField   string
+	MsgField     string
 }
 
 // Write processes a line of input data and return n of bytes written
@@ -70,7 +49,7 @@ func (p *Processor) Write(in []byte) (n int, err error) {
 	}
 
 	bytes := p.compile(data)
-	_, _ = p.out.Write(bytes)
+	_, _ = p.Out.Write(bytes)
 
 	return len(bytes), nil
 }
@@ -92,26 +71,27 @@ func (p *Processor) compile(data map[string]interface{}) []byte {
 	var out bytes.Buffer
 	var level string
 
-	level, ok := data[p.fields[fLevel]].(string)
+	level, ok := data[p.LevelField].(string)
 	if ok {
 		out.WriteString(levelToColour(level))
-		delete(data, p.fields[fLevel])
+		delete(data, p.LevelField)
 	}
 
-	for _, field := range []string{fTime, fHost, p.nameField} {
-		if value, ok := data[p.fields[field]]; ok {
-			out.WriteString(fmt.Sprintf("%s ", value))
-			delete(data, p.fields[field])
+	for _, field := range p.HeaderFields {
+		if value, ok := data[field]; ok {
+			out.WriteString(fmt.Sprintf("%v ", value))
+			delete(data, field)
 		}
 	}
 
 	if level != "" {
 		out.WriteString(fmt.Sprintf("%s ", strings.ToUpper(level)))
+		delete(data, p.LevelField)
 	}
 
-	if msg, ok := data[p.fields[fMsg]]; ok {
+	if msg, ok := data[p.MsgField]; ok {
 		out.WriteString(fmt.Sprintf(":: %s ", msg))
-		delete(data, p.fields[fMsg])
+		delete(data, p.MsgField)
 	}
 
 	rest, _ := json.MarshalIndent(data, "", "  ")

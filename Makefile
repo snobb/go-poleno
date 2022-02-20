@@ -7,6 +7,12 @@ BIN      = ./bin
 COVEROUT = cover.out
 
 all: build
+BRANCH   := ${shell git rev-parse --abbrev-ref HEAD}
+REVCNT   := ${shell git rev-list --count $(BRANCH)}
+REVHASH  := ${shell git log -1 --format="%h"}
+LDFLAGS  := -X main.version=${BRANCH}.${REVCNT}.${REVHASH}
+CFLAGS   := --ldflags '${LDFLAGS}' -o $(BIN)/$(TARGET)
+
 
 lint:
 	golangci-lint run
@@ -19,13 +25,14 @@ test:
 	go test -timeout $(TIMEOUT)s -cover -coverprofile=$(COVEROUT) ./pkg/...
 
 build:
-	go build -o $(BIN)/$(TARGET) $(MAIN)
+	go build ${CFLAGS} $(MAIN)
 
-build-linux:
-	CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o $(BIN)/$(TARGET) $(MAIN)
+build-linux: clean
+	CGO_ENABLED=0 GOOS=linux go build ${CFLAGS} -a -installsuffix cgo $(MAIN)
+
 
 clean:
 	-rm -rf $(BIN)
 	-rm -f $(COVEROUT)
 
-.PHONY: build
+.PHONY: build build-linux

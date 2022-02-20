@@ -2,6 +2,7 @@ package main
 
 import (
 	"bufio"
+	"flag"
 	"fmt"
 	"os"
 	"os/signal"
@@ -10,9 +11,22 @@ import (
 	"github.com/snobb/go-poleno/pkg/processor"
 )
 
+var version string
+
 func main() {
+	var name string
+	var ver bool
+	flag.StringVar(&name, "n", "name", "field to show in the header")
+	flag.BoolVar(&ver, "v", false, "show version")
+	flag.Parse()
+
+	if ver {
+		fmt.Println(version)
+		return
+	}
+
 	in := bufio.NewScanner(os.Stdin)
-	out := processor.New(os.Stdout)
+	out := processor.New(os.Stdout, name)
 	sigs := make(chan os.Signal, 1)
 
 	signal.Notify(sigs,

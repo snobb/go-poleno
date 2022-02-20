@@ -11,7 +11,6 @@ import (
 const (
 	fTime  = "time"
 	fMsg   = "msg"
-	fName  = "name"
 	fLevel = "level"
 	fHost  = "hostname"
 )
@@ -40,26 +39,29 @@ var levelColours = map[string]string{
 
 // Processor process inbound data and outputs processed result to the provided writer
 type Processor struct {
-	out    io.Writer
-	fields map[string]string
+	out       io.Writer
+	fields    map[string]string
+	nameField string
 }
 
 // New creates a new processor function
-func New(out io.Writer) *Processor {
+func New(out io.Writer, nameField string) *Processor {
 	return &Processor{
 		out: out,
 		fields: map[string]string{
-			fTime:  "time",
-			fMsg:   "msg",
-			fName:  "name",
-			fLevel: "level",
-			fHost:  "hostname",
+			fTime:     "time",
+			fMsg:      "msg",
+			fLevel:    "level",
+			fHost:     "hostname",
+			nameField: nameField,
 		},
+		nameField: nameField,
 	}
 }
 
-// Process processes a line of input data and return n of bytes written
+// Write processes a line of input data and return n of bytes written
 // to the out writer or error.
+// IN buffer must contain a valid and full json document.
 func (p *Processor) Write(in []byte) (n int, err error) {
 	var data map[string]interface{}
 
@@ -96,7 +98,7 @@ func (p *Processor) compile(data map[string]interface{}) []byte {
 		delete(data, p.fields[fLevel])
 	}
 
-	for _, field := range []string{fTime, fHost, fName} {
+	for _, field := range []string{fTime, fHost, p.nameField} {
 		if value, ok := data[p.fields[field]]; ok {
 			out.WriteString(fmt.Sprintf("%s ", value))
 			delete(data, p.fields[field])

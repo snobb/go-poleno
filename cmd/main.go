@@ -47,12 +47,12 @@ func main() {
 	for in.Scan() {
 		select {
 		case <-sigs:
-			break
+			return
 
 		default:
 			bytes := in.Bytes()
 			if len(bytes) == 0 {
-				break
+				return
 			}
 
 			if _, err := out.Write(bytes); err != nil {

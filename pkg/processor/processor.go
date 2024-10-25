@@ -30,7 +30,7 @@ var levelColours = map[string]string{
 	"trace": "grey",
 }
 
-// Processor process inbound data and outputs processed result to the provided writer
+// Processor process inbound data and outputs processed result to the provided writer.
 type Processor struct {
 	Out          io.Writer
 	HeaderFields []string
@@ -48,10 +48,16 @@ func (p *Processor) Write(in []byte) (n int, err error) {
 		return 0, err
 	}
 
-	bytes := p.compile(data)
-	_, _ = p.Out.Write(bytes)
+	payload, err := p.compile(data)
+	if err != nil {
+		return 0, err
+	}
 
-	return len(bytes), nil
+	if _, err := p.Out.Write(payload); err != nil {
+		return len(payload), err
+	}
+
+	return len(payload), nil
 }
 
 func levelToColour(level string) string {
@@ -67,7 +73,7 @@ func levelToColour(level string) string {
 	return colourMap["reset"]
 }
 
-func (p *Processor) compile(data map[string]interface{}) []byte {
+func (p *Processor) compile(data map[string]interface{}) ([]byte, error) {
 	var out bytes.Buffer
 	var level string
 
@@ -94,11 +100,14 @@ func (p *Processor) compile(data map[string]interface{}) []byte {
 		delete(data, p.MsgField)
 	}
 
-	rest, _ := json.MarshalIndent(data, "", "  ")
+	rest, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return nil, err
+	}
 
 	out.Write(rest)
 	out.WriteString(colourMap["reset"])
 	out.WriteString("\n")
 
-	return out.Bytes()
+	return out.Bytes(), nil
 }

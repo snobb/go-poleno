@@ -61,7 +61,7 @@ func (p *Processor) Write(in []byte) (n int, err error) {
 }
 
 func levelToColour(level string) string {
-	colour, ok := levelColours[level]
+	colour, ok := levelColours[strings.ToLower(level)]
 	if !ok {
 		colour = "reset"
 	}

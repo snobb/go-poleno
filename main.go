@@ -10,7 +10,7 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/snobb/go-poleno/pkg/processor"
+	"github.com/snobb/go-poleno/internal/processor"
 )
 
 var version string

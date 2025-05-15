@@ -2,7 +2,7 @@ export GO111MODULE=on
 export GOVCS=*:git
 
 TARGET   = poleno
-MAIN     = ./cmd/main.go
+MAIN     = ./main.go
 BIN      = ./bin
 COVEROUT = cover.out
 

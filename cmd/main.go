@@ -19,7 +19,7 @@ func main() {
 	var fields, level, msg string
 	var ver bool
 
-	flag.StringVar(&fields, "f", "time,hostname,name", "comma separated list of fields to show in the header")
+	flag.StringVar(&fields, "f", "ts,time,timestamp,hostname,name", "comma separated list of fields to show in the header")
 	flag.StringVar(&level, "l", "level", "name of the log level field")
 	flag.StringVar(&msg, "m", "msg", "name of the message field")
 	flag.BoolVar(&ver, "v", false, "show version")

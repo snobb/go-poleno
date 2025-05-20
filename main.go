@@ -38,27 +38,25 @@ func main() {
 		LevelField:   level,
 		MsgField:     msg,
 	}
-	sigs := make(chan os.Signal, 1)
 
-	signal.Notify(sigs,
-		syscall.SIGINT, syscall.SIGTERM,
-		syscall.SIGQUIT, os.Interrupt)
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, os.Interrupt, os.Kill, syscall.SIGTERM)
 
 	for in.Scan() {
 		select {
 		case <-sigs:
-			return
-
+			continue
 		default:
-			bytes := in.Bytes()
-			if len(bytes) == 0 {
-				return
-			}
+		}
 
-			if _, err := out.Write(bytes); err != nil {
-				// not json - just ignore the error and print the original line
-				fmt.Println(string(bytes))
-			}
+		bytes := in.Bytes()
+		if len(bytes) == 0 {
+			return
+		}
+
+		if _, err := out.Write(bytes); err != nil {
+			// not json - just ignore the error and print the original line
+			fmt.Println(string(bytes))
 		}
 	}
 }

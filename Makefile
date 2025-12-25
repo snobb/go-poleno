@@ -10,7 +10,7 @@ all: build
 BRANCH   := ${shell git rev-parse --abbrev-ref HEAD}
 REVCNT   := ${shell git rev-list --count $(BRANCH)}
 REVHASH  := ${shell git log -1 --format="%h"}
-LDFLAGS  := -X main.version=${BRANCH}.${REVCNT}.${REVHASH}
+LDFLAGS  := -X main.version=${BRANCH}.${REVCNT}.${REVHASH} -s
 CFLAGS   := --ldflags '${LDFLAGS}' -o $(BIN)/$(TARGET)
 
 

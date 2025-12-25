@@ -6,21 +6,9 @@ import (
 	"fmt"
 	"io"
 	"strings"
+
+	"github.com/snobb/go-poleno/internal/termcolour"
 )
-
-var colourMap = map[string]string{
-	"reset": "\x1b[0m",
-	"white": "\x1b[1m",
-	"grey":  "\x1b[2m",
-
-	"black":   "\x1b[30m",
-	"red":     "\x1b[31m",
-	"green":   "\x1b[32m",
-	"yellow":  "\x1b[33m",
-	"blue":    "\x1b[34m",
-	"magenta": "\x1b[35m",
-	"cyan":    "\x1b[36m",
-}
 
 var levelColours = map[string]string{
 	"error": "red",
@@ -63,14 +51,14 @@ func (p *Processor) Write(in []byte) (n int, err error) {
 func levelToColour(level string) string {
 	colour, ok := levelColours[strings.ToLower(level)]
 	if !ok {
-		colour = "reset"
+		return termcolour.Reset()
 	}
 
-	if cHash, ok := colourMap[colour]; ok {
+	if cHash := termcolour.Lookup(colour); cHash != "" {
 		return cHash
 	}
 
-	return colourMap["reset"]
+	return termcolour.Reset()
 }
 
 func (p *Processor) compile(data map[string]interface{}) ([]byte, error) {
@@ -106,7 +94,7 @@ func (p *Processor) compile(data map[string]interface{}) ([]byte, error) {
 	}
 
 	out.Write(rest)
-	out.WriteString(colourMap["reset"])
+	out.WriteString(termcolour.Reset())
 	out.WriteString("\n")
 
 	return out.Bytes(), nil
